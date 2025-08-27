@@ -1,16 +1,15 @@
 # 📋 Clipboard Copilot (ClipPilot)
 
-Clipboard Copilot is a lightweight Python app that transforms your clipboard into an AI-powered assistant. Just copy any text, hit `Ctrl+Shift+C`, and choose a prompt to send it to ChatGPT. Instantly simplify, summarize, translate, or refactor your clipboard content—without ever opening a browser.
+Clipboard Copilot is a lightweight Python app that transforms your clipboard into an AI-powered assistant. Just copy any text, hit `Ctrl+Shift+C` (or any other configurable hotkey), and choose a prompt to send it to ChatGPT. Instantly simplify, summarize, translate, or refactor your clipboard content—without ever opening a browser.
 
 ---
 
 ## 🚀 Features
 
-- Global hotkey (`Ctrl+Shift+C`) to launch prompt menu  
-- Predefined and custom prompts  
-- ChatGPT API integration (GPT-4 or GPT-3.5 via Azure)  
-- Response viewer with copy-to-clipboard  
-- Cross-platform (Windows & Linux)
+- Configurable hotkey (default: `Ctrl+Shift+C`) to launch prompt menu  
+- Predefined common prompts
+- ChatGPT API integration (via Azure AI Foundry)  
+- Response viewer with copy-to-clipboard that you can also reply to the prompt for more details and refining requests all within the GUI
 
 ---
 
