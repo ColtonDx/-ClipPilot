@@ -7,7 +7,7 @@ import threading
 
 # === CONFIG ===
 API_KEY = "your_azure_api_key_here"
-API_URL = "https://coltondixon-homeassista-resource.cognitiveservices.azure.com/openai/deployments/gpt-4.1-mini/chat/completions?api-version=2025-01-01-preview"
+API_URL = "your_azure_foundry_endpoint_url"
 
 PROMPTS = [
     "Simplify this",
