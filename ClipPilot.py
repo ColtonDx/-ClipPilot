@@ -150,28 +150,29 @@ class PromptPopup(tk.Toplevel):
         self.destroy()
         CustomPromptWindow(root, self.clipboard_text)
 
-    def call_chatgpt(self, user_input):
-        headers = {
-            "api-key": API_KEY,
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "messages": [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": user_input}
-            ]
-        }
-        try:
-            response = requests.post(API_URL, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-            if "choices" in data and len(data["choices"]) > 0:
-                reply = data["choices"][0]["message"]["content"]
-                root.after(0, lambda: ResponseWindow(root, reply))
-            else:
-                root.after(0, lambda: messagebox.showerror("API Error", "No response content received."))
-        except Exception:
-            root.after(0, lambda: messagebox.showerror("API Error", "Request failed. Please check your configuration."))
+def call_chatgpt(self, user_input):
+    headers = {
+        "api-key": API_KEY,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": user_input}
+        ]
+    }
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+
+        if "choices" in data and len(data["choices"]) > 0:
+            reply = data["choices"][0]["message"]["content"]
+            root.after(0, lambda: ResponseWindow(root, reply, user_input))  # ✅ Pass initial_prompt
+        else:
+            root.after(0, lambda: messagebox.showerror("API Error", "No response content received."))
+    except Exception:
+        root.after(0, lambda: messagebox.showerror("API Error", "Request failed. Please check your configuration."))
 
 # === Custom Prompt Window ===
 class CustomPromptWindow(tk.Toplevel):
@@ -194,28 +195,29 @@ class CustomPromptWindow(tk.Toplevel):
             threading.Thread(target=self.call_chatgpt, args=(full_prompt,), daemon=True).start()
             self.destroy()
 
-    def call_chatgpt(self, user_input):
-        headers = {
-            "api-key": API_KEY,
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "messages": [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": user_input}
-            ]
-        }
-        try:
-            response = requests.post(API_URL, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-            if "choices" in data and len(data["choices"]) > 0:
-                reply = data["choices"][0]["message"]["content"]
-                root.after(0, lambda: ResponseWindow(root, reply))
-            else:
-                root.after(0, lambda: messagebox.showerror("API Error", "No response content received."))
-        except Exception:
-            root.after(0, lambda: messagebox.showerror("API Error", "Request failed. Please check your configuration."))
+def call_chatgpt(self, user_input):
+    headers = {
+        "api-key": API_KEY,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": user_input}
+        ]
+    }
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+
+        if "choices" in data and len(data["choices"]) > 0:
+            reply = data["choices"][0]["message"]["content"]
+            root.after(0, lambda: ResponseWindow(root, reply, user_input))  # ✅ Pass initial_prompt
+        else:
+            root.after(0, lambda: messagebox.showerror("API Error", "No response content received."))
+    except Exception:
+        root.after(0, lambda: messagebox.showerror("API Error", "Request failed. Please check your configuration."))
 
 # === Response Window ===
 class ResponseWindow(tk.Toplevel):
