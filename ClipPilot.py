@@ -40,27 +40,38 @@ def launch_setup_wizard():
 
     messagebox.showinfo("ClipPilot Setup", "Welcome! Let's configure your ClipPilot settings.")
 
+    # === API URL ===
     while True:
         api_url = simpledialog.askstring("API URL", "Enter your Azure API URL:", parent=wizard)
-        if not api_url or not is_valid_url(api_url):
+        if api_url is None:
+            messagebox.showinfo("Setup Cancelled", "Setup was cancelled.")
+            wizard.destroy()
+            exit()
+        if not is_valid_url(api_url):
             messagebox.showerror("Invalid URL", "Please enter a valid Azure endpoint URL.")
             continue
         break
 
+    # === API Key ===
     api_key = simpledialog.askstring("API Key", "Enter your Azure API Key:", parent=wizard)
-    if not api_key:
-        messagebox.showerror("Setup Cancelled", "API Key is required.")
+    if api_key is None or api_key.strip() == "":
+        messagebox.showinfo("Setup Cancelled", "Setup was cancelled.")
+        wizard.destroy()
         exit()
 
+    # === Test Connection ===
     messagebox.showinfo("Testing Connection", "Checking your API credentials...")
     if not test_connection(api_url, api_key):
         messagebox.showerror("Connection Failed", "Could not connect to Azure OpenAI. Please check your URL and key.")
+        wizard.destroy()
         exit()
 
+    # === Hotkey ===
     hotkey = simpledialog.askstring("Hotkey", "Customize hotkey (default is ctrl+shift+c):", parent=wizard)
-    if not hotkey:
+    if hotkey is None or hotkey.strip() == "":
         hotkey = "ctrl+shift+c"
 
+    # === Save Config ===
     config = configparser.ConfigParser()
     config["ClipPilot"] = {
         "api_url": api_url,
@@ -73,6 +84,7 @@ def launch_setup_wizard():
 
     messagebox.showinfo("Setup Complete", f"✅ Config saved to {CONFIG_FILE}. Launching ClipPilot...")
     wizard.destroy()
+
 
 # === Load Config ===
 if not os.path.exists(CONFIG_FILE):
