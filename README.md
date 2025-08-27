@@ -1,16 +1,26 @@
-# 📋 ClipPilot
+# 📋 Clipboard Copilot (ClipPilot)
 
-ClipPilot is a lightweight Python app that transforms your clipboard into an AI-powered assistant. Just copy any text, hit `Ctrl+Shift+C`, and choose a prompt to send it to ChatGPT. Instantly simplify, summarize, translate, or refactor your clipboard content—without ever opening a browser.
+Clipboard Copilot is a lightweight Python app that transforms your clipboard into an AI-powered assistant. Just copy any text, hit `Ctrl+Shift+C`, and choose a prompt to send it to ChatGPT. Instantly simplify, summarize, translate, or refactor your clipboard content—without ever opening a browser.
 
 ---
 
 ## 🚀 Features
 
-- Global hotkey (`Ctrl+Shift+C`) to launch prompt menu
-- Predefined and custom prompts
-- ChatGPT API integration (GPT-4 or GPT-3.5)
-- Response viewer with copy-to-clipboard
+- Global hotkey (`Ctrl+Shift+C`) to launch prompt menu  
+- Predefined and custom prompts  
+- ChatGPT API integration (GPT-4 or GPT-3.5 via Azure)  
+- Response viewer with copy-to-clipboard  
 - Cross-platform (Windows & Linux)
+
+---
+
+## 🖼️ Screenshots
+
+### 📋 Prompt Menu
+![Prompt Menu](ClipPilot_Menu.png)
+
+### 🧠 Sample Response
+![Response Window](ClipPilot_Response.png)
 
 ---
 
@@ -20,3 +30,23 @@ Install Python 3.8+ and the following packages:
 
 ```bash
 pip install -r requirements.txt
+```
+
+## 🧠 How to Use
+
+1. **Copy any text** to your clipboard.  
+2. **Press `Ctrl+Shift+C`** to open the prompt menu.  
+3. **Choose a prompt** (e.g. "Simplify this", "Summarize this", or enter a custom one).  
+4. The app sends your clipboard + prompt to ChatGPT via your Azure endpoint.  
+5. **View the response** in a popup window and optionally copy it back to your clipboard.  
+6. **Press `Esc` or click "Cancel"** to dismiss the menu without sending anything.
+
+---
+
+## 🛡️ Privacy Note
+
+This app sends clipboard content to the Azure OpenAI API for processing.  
+Be mindful of sensitive information—such as passwords, personal messages, or confidential data—before triggering a prompt.
+
+You can add filters, redaction logic, or confirmation prompts to enhance privacy.  
+For more details on how your data is handled, refer to [Microsoft's Privacy Statement](https://privacy.microsoft.com/en-us/privacystatement).

@@ -7,7 +7,7 @@ import threading
 
 # === CONFIG ===
 API_KEY = "your_azure_api_key_here"
-API_URL = "your_azure_foundry_endpoint_url"
+API_URL = "your_azure_foundry_url"
 
 PROMPTS = [
     "Simplify this",
