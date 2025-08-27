@@ -143,8 +143,9 @@ class PromptPopup(tk.Toplevel):
 
     def send_prompt(self, prompt):
         full_prompt = f"{prompt}:\n\n{self.clipboard_text}"
-        threading.Thread(target=self.call_chatgpt, args=(full_prompt,), daemon=True).start()
         self.destroy()
+        threading.Thread(target=lambda: ResponseWindow(root, "", full_prompt), daemon=True).start()
+
 
     def custom_prompt(self):
         self.destroy()
