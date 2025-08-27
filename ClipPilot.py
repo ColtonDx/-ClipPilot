@@ -1,14 +1,97 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import simpledialog, messagebox
 import pyperclip
 import requests
 import keyboard
 import threading
+import configparser
+import os
+import re
 
-# === CONFIG ===
-API_KEY = "your_azure_api_key_here"
-API_URL = "your_azure_foundry_url"
+CONFIG_FILE = "ClipPilot.conf"
 
+# === Validation ===
+def is_valid_url(url):
+    return re.match(r"^https://.+\.azure\.com/.+", url)
+
+def test_connection(api_url, api_key):
+    headers = {
+        "api-key": api_key,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "Say hello!"}
+        ]
+    }
+    try:
+        response = requests.post(api_url, headers=headers, json=payload, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        return "choices" in data and len(data["choices"]) > 0
+    except Exception:
+        return False
+
+# === Setup Wizard ===
+def launch_setup_wizard():
+    wizard = tk.Tk()
+    wizard.withdraw()
+
+    messagebox.showinfo("ClipPilot Setup", "Welcome! Let's configure your ClipPilot settings.")
+
+    while True:
+        api_url = simpledialog.askstring("API URL", "Enter your Azure API URL:", parent=wizard)
+        if not api_url or not is_valid_url(api_url):
+            messagebox.showerror("Invalid URL", "Please enter a valid Azure endpoint URL.")
+            continue
+        break
+
+    api_key = simpledialog.askstring("API Key", "Enter your Azure API Key:", parent=wizard)
+    if not api_key:
+        messagebox.showerror("Setup Cancelled", "API Key is required.")
+        exit()
+
+    messagebox.showinfo("Testing Connection", "Checking your API credentials...")
+    if not test_connection(api_url, api_key):
+        messagebox.showerror("Connection Failed", "Could not connect to Azure OpenAI. Please check your URL and key.")
+        exit()
+
+    hotkey = simpledialog.askstring("Hotkey", "Customize hotkey (default is ctrl+shift+c):", parent=wizard)
+    if not hotkey:
+        hotkey = "ctrl+shift+c"
+
+    config = configparser.ConfigParser()
+    config["ClipPilot"] = {
+        "api_url": api_url,
+        "api_key": api_key,
+        "hotkey": hotkey
+    }
+
+    with open(CONFIG_FILE, "w") as f:
+        config.write(f)
+
+    messagebox.showinfo("Setup Complete", f"✅ Config saved to {CONFIG_FILE}. Launching ClipPilot...")
+    wizard.destroy()
+
+# === Load Config ===
+if not os.path.exists(CONFIG_FILE):
+    launch_setup_wizard()
+
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE)
+
+try:
+    API_KEY = config.get("ClipPilot", "api_key")
+    API_URL = config.get("ClipPilot", "api_url")
+    current_hotkey = config.get("ClipPilot", "hotkey", fallback="ctrl+shift+c")
+except Exception as e:
+    raise ValueError(f"Invalid or missing config values: {e}")
+
+if not API_KEY or not API_URL:
+    raise ValueError("Missing API key or API URL in ClipPilot.conf")
+
+# === Prompt Presets ===
 PROMPTS = [
     "Simplify this",
     "Summarize this",
@@ -17,18 +100,17 @@ PROMPTS = [
     "Extract action items"
 ]
 
-# === GLOBAL ROOT INSTANCE ===
+# === GUI Root ===
 root = tk.Tk()
-root.withdraw()  # Hide the main window, used only for spawning popups
+root.withdraw()
 
-# === POPUP MENU ===
+# === Prompt Menu ===
 class PromptPopup(tk.Toplevel):
     def __init__(self, master, clipboard_text):
         super().__init__(master)
         self.clipboard_text = clipboard_text
         self.title("Clipboard Copilot")
-        self.geometry("300x250+600+300")
-        self.overrideredirect(True)
+        self.geometry("300x300+600+300")
         self.configure(bg="#f0f0f0")
         self.focus_force()
 
@@ -38,6 +120,9 @@ class PromptPopup(tk.Toplevel):
             tk.Button(self, text=prompt, command=lambda p=prompt: self.send_prompt(p)).pack(fill=tk.X, padx=20, pady=2)
 
         tk.Button(self, text="Custom prompt...", command=self.custom_prompt).pack(fill=tk.X, padx=20, pady=10)
+        tk.Button(self, text="Cancel", command=self.destroy).pack(fill=tk.X, padx=20, pady=5)
+
+        self.bind("<Escape>", lambda e: self.destroy())
 
     def send_prompt(self, prompt):
         full_prompt = f"{prompt}:\n\n{self.clipboard_text}"
@@ -63,7 +148,6 @@ class PromptPopup(tk.Toplevel):
             response = requests.post(API_URL, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
-
             if "choices" in data and len(data["choices"]) > 0:
                 reply = data["choices"][0]["message"]["content"]
                 root.after(0, lambda: ResponseWindow(root, reply))
@@ -72,7 +156,7 @@ class PromptPopup(tk.Toplevel):
         except Exception:
             root.after(0, lambda: messagebox.showerror("API Error", "Request failed. Please check your configuration."))
 
-# === CUSTOM PROMPT WINDOW ===
+# === Custom Prompt Window ===
 class CustomPromptWindow(tk.Toplevel):
     def __init__(self, master, clipboard_text):
         super().__init__(master)
@@ -108,7 +192,6 @@ class CustomPromptWindow(tk.Toplevel):
             response = requests.post(API_URL, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
-
             if "choices" in data and len(data["choices"]) > 0:
                 reply = data["choices"][0]["message"]["content"]
                 root.after(0, lambda: ResponseWindow(root, reply))
@@ -117,7 +200,7 @@ class CustomPromptWindow(tk.Toplevel):
         except Exception:
             root.after(0, lambda: messagebox.showerror("API Error", "Request failed. Please check your configuration."))
 
-# === RESPONSE WINDOW ===
+# === Response Window ===
 class ResponseWindow(tk.Toplevel):
     def __init__(self, master, response_text):
         super().__init__(master)
@@ -135,7 +218,7 @@ class ResponseWindow(tk.Toplevel):
         pyperclip.copy(self.textbox.get("1.0", tk.END).strip())
         messagebox.showinfo("Copied", "Response copied to clipboard.")
 
-# === HOTKEY LISTENER ===
+# === Hotkey Listener ===
 def launch_popup():
     clipboard_text = pyperclip.paste().strip()
     if clipboard_text:
@@ -144,11 +227,11 @@ def launch_popup():
         root.after(0, lambda: messagebox.showwarning("Empty Clipboard", "Clipboard is empty."))
 
 def start_hotkey_listener():
-    keyboard.add_hotkey("ctrl+shift+c", launch_popup)
-    print("📋 Copilot hotkey listener running... Press Ctrl+Shift+C to activate.")
+    keyboard.add_hotkey(current_hotkey, launch_popup)
+    print(f"📋 ClipPilot hotkey listener running... Press {current_hotkey} to activate.")
     keyboard.wait()
 
-# === MAIN ===
+# === Main ===
 if __name__ == "__main__":
     threading.Thread(target=start_hotkey_listener, daemon=True).start()
     root.mainloop()
