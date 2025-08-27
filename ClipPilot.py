@@ -6,9 +6,8 @@ import keyboard
 import threading
 
 # === CONFIG ===
-API_KEY = "your_openai_api_key_here"
-API_URL = "https://api.openai.com/v1/chat/completions"
-MODEL = "gpt-4"
+API_KEY = "your_azure_api_key_here"
+API_URL = "your_ai_foundry_endpoint"
 
 PROMPTS = [
     "Simplify this",
@@ -17,6 +16,10 @@ PROMPTS = [
     "Turn into bullet points",
     "Extract action items"
 ]
+
+# === GLOBAL ROOT INSTANCE ===
+root = tk.Tk()
+root.withdraw()  # Hide the main window, used only for spawning popups
 
 # === POPUP MENU ===
 class PromptPopup(tk.Toplevel):
@@ -43,15 +46,14 @@ class PromptPopup(tk.Toplevel):
 
     def custom_prompt(self):
         self.destroy()
-        CustomPromptWindow(self.master, self.clipboard_text)
+        CustomPromptWindow(root, self.clipboard_text)
 
     def call_chatgpt(self, user_input):
         headers = {
-            "Authorization": f"Bearer {API_KEY}",
+            "api-key": API_KEY,
             "Content-Type": "application/json"
         }
         payload = {
-            "model": MODEL,
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": user_input}
@@ -61,9 +63,9 @@ class PromptPopup(tk.Toplevel):
             response = requests.post(API_URL, headers=headers, json=payload)
             response.raise_for_status()
             reply = response.json()["choices"][0]["message"]["content"]
-            ResponseWindow(self.master, reply)
+            root.after(0, lambda: ResponseWindow(root, reply))
         except Exception as e:
-            messagebox.showerror("API Error", str(e))
+            root.after(0, lambda: messagebox.showerror("API Error", str(e)))
 
 # === CUSTOM PROMPT WINDOW ===
 class CustomPromptWindow(tk.Toplevel):
@@ -88,11 +90,10 @@ class CustomPromptWindow(tk.Toplevel):
 
     def call_chatgpt(self, user_input):
         headers = {
-            "Authorization": f"Bearer {API_KEY}",
+            "api-key": API_KEY,
             "Content-Type": "application/json"
         }
         payload = {
-            "model": MODEL,
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": user_input}
@@ -102,9 +103,9 @@ class CustomPromptWindow(tk.Toplevel):
             response = requests.post(API_URL, headers=headers, json=payload)
             response.raise_for_status()
             reply = response.json()["choices"][0]["message"]["content"]
-            ResponseWindow(self.master, reply)
+            root.after(0, lambda: ResponseWindow(root, reply))
         except Exception as e:
-            messagebox.showerror("API Error", str(e))
+            root.after(0, lambda: messagebox.showerror("API Error", str(e)))
 
 # === RESPONSE WINDOW ===
 class ResponseWindow(tk.Toplevel):
@@ -128,19 +129,16 @@ class ResponseWindow(tk.Toplevel):
 def launch_popup():
     clipboard_text = pyperclip.paste().strip()
     if clipboard_text:
-        root = tk.Tk()
-        root.withdraw()
-        PromptPopup(root, clipboard_text)
-        root.mainloop()
+        root.after(0, lambda: PromptPopup(root, clipboard_text))
     else:
-        messagebox.showwarning("Empty Clipboard", "Clipboard is empty.")
+        root.after(0, lambda: messagebox.showwarning("Empty Clipboard", "Clipboard is empty."))
 
 def start_hotkey_listener():
     keyboard.add_hotkey("ctrl+shift+c", launch_popup)
     print("📋 Copilot hotkey listener running... Press Ctrl+Shift+C to activate.")
-    keyboard.wait()  # Keeps the script alive
+    keyboard.wait()
 
 # === MAIN ===
 if __name__ == "__main__":
     threading.Thread(target=start_hotkey_listener, daemon=True).start()
-    keyboard.wait()
+    root.mainloop()
