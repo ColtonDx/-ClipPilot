@@ -143,35 +143,37 @@ class PromptPopup(tk.Toplevel):
 
     def send_prompt(self, prompt):
         full_prompt = f"{prompt}:\n\n{self.clipboard_text}"
-        threading.Thread(target=self.call_chatgpt, args=(full_prompt,), daemon=True).start()
         self.destroy()
+        threading.Thread(target=lambda: ResponseWindow(root, "", full_prompt), daemon=True).start()
+
 
     def custom_prompt(self):
         self.destroy()
         CustomPromptWindow(root, self.clipboard_text)
 
-    def call_chatgpt(self, user_input):
-        headers = {
-            "api-key": API_KEY,
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "messages": [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": user_input}
-            ]
-        }
-        try:
-            response = requests.post(API_URL, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-            if "choices" in data and len(data["choices"]) > 0:
-                reply = data["choices"][0]["message"]["content"]
-                root.after(0, lambda: ResponseWindow(root, reply))
-            else:
-                root.after(0, lambda: messagebox.showerror("API Error", "No response content received."))
-        except Exception:
-            root.after(0, lambda: messagebox.showerror("API Error", "Request failed. Please check your configuration."))
+def call_chatgpt(self, user_input):
+    headers = {
+        "api-key": API_KEY,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": user_input}
+        ]
+    }
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+
+        if "choices" in data and len(data["choices"]) > 0:
+            reply = data["choices"][0]["message"]["content"]
+            root.after(0, lambda: ResponseWindow(root, reply, user_input))  # ✅ Pass initial_prompt
+        else:
+            root.after(0, lambda: messagebox.showerror("API Error", "No response content received."))
+    except Exception:
+        root.after(0, lambda: messagebox.showerror("API Error", "Request failed. Please check your configuration."))
 
 # === Custom Prompt Window ===
 class CustomPromptWindow(tk.Toplevel):
@@ -194,46 +196,101 @@ class CustomPromptWindow(tk.Toplevel):
             threading.Thread(target=self.call_chatgpt, args=(full_prompt,), daemon=True).start()
             self.destroy()
 
-    def call_chatgpt(self, user_input):
+def call_chatgpt(self, user_input):
+    headers = {
+        "api-key": API_KEY,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": user_input}
+        ]
+    }
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+
+        if "choices" in data and len(data["choices"]) > 0:
+            reply = data["choices"][0]["message"]["content"]
+            root.after(0, lambda: ResponseWindow(root, reply, user_input))  # ✅ Pass initial_prompt
+        else:
+            root.after(0, lambda: messagebox.showerror("API Error", "No response content received."))
+    except Exception:
+        root.after(0, lambda: messagebox.showerror("API Error", "Request failed. Please check your configuration."))
+
+# === Response Window ===
+class ResponseWindow(tk.Toplevel):
+    def __init__(self, master, initial_response, initial_prompt):
+        super().__init__(master)
+        self.title("Conversation")
+        self.geometry("500x500+600+300")
+
+        self.conversation_history = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": initial_prompt},
+            {"role": "assistant", "content": initial_response}
+        ]
+
+        tk.Label(self, text="ClipPilot Conversation:", font=("Segoe UI", 10, "bold")).pack(pady=5)
+
+        self.textbox = tk.Text(self, wrap=tk.WORD, state=tk.NORMAL)
+        self.textbox.pack(expand=True, fill=tk.BOTH, padx=10, pady=5)
+        self.textbox.insert(tk.END, f"🧑 You: {initial_prompt}\n\n🤖 Copilot: {initial_response}\n\n")
+        self.textbox.config(state=tk.DISABLED)
+
+        self.reply_entry = tk.Entry(self, width=60)
+        self.reply_entry.pack(pady=5)
+
+        btn_frame = tk.Frame(self)
+        btn_frame.pack(pady=5)
+
+        tk.Button(btn_frame, text="Send Reply", command=self.send_reply).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Copy All", command=self.copy_conversation).pack(side=tk.LEFT, padx=5)
+
+    def send_reply(self):
+        user_input = self.reply_entry.get().strip()
+        if not user_input:
+            return
+
+        self.reply_entry.delete(0, tk.END)
+        self.conversation_history.append({"role": "user", "content": user_input})
+
+        threading.Thread(target=self.call_chatgpt, args=(self.conversation_history,), daemon=True).start()
+
+    def call_chatgpt(self, messages):
         headers = {
             "api-key": API_KEY,
             "Content-Type": "application/json"
         }
-        payload = {
-            "messages": [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": user_input}
-            ]
-        }
+        payload = {"messages": messages}
+
         try:
             response = requests.post(API_URL, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
+
             if "choices" in data and len(data["choices"]) > 0:
                 reply = data["choices"][0]["message"]["content"]
-                root.after(0, lambda: ResponseWindow(root, reply))
+                self.conversation_history.append({"role": "assistant", "content": reply})
+                self.root_display_reply(reply)
             else:
-                root.after(0, lambda: messagebox.showerror("API Error", "No response content received."))
+                self.root_display_reply("[No response received.]")
         except Exception:
-            root.after(0, lambda: messagebox.showerror("API Error", "Request failed. Please check your configuration."))
+            self.root_display_reply("[Request failed. Check your config.]")
 
-# === Response Window ===
-class ResponseWindow(tk.Toplevel):
-    def __init__(self, master, response_text):
-        super().__init__(master)
-        self.title("Response")
-        self.geometry("500x400+600+300")
+    def root_display_reply(self, reply):
+        self.textbox.config(state=tk.NORMAL)
+        self.textbox.insert(tk.END, f"🤖 Copilot: {reply}\n\n")
+        self.textbox.config(state=tk.DISABLED)
+        self.textbox.see(tk.END)
 
-        tk.Label(self, text="ChatGPT Response:", font=("Segoe UI", 10, "bold")).pack(pady=10)
-        self.textbox = tk.Text(self, wrap=tk.WORD)
-        self.textbox.insert(tk.END, response_text)
-        self.textbox.pack(expand=True, fill=tk.BOTH, padx=10, pady=5)
+    def copy_conversation(self):
+        full_text = self.textbox.get("1.0", tk.END).strip()
+        pyperclip.copy(full_text)
+        messagebox.showinfo("Copied", "Conversation copied to clipboard.")
 
-        tk.Button(self, text="Copy to Clipboard", command=self.copy_to_clipboard).pack(pady=10)
-
-    def copy_to_clipboard(self):
-        pyperclip.copy(self.textbox.get("1.0", tk.END).strip())
-        messagebox.showinfo("Copied", "Response copied to clipboard.")
 
 # === Hotkey Listener ===
 def launch_popup():
