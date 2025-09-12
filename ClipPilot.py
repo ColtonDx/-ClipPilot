@@ -7,6 +7,7 @@ import threading
 import configparser
 import os
 import re
+import sys
 
 CONFIG_FILE = "ClipPilot.conf"
 
@@ -303,8 +304,7 @@ def open_config():
 def exit_app(icon, item):
     icon.stop()
     root.quit()
-
-import sys, os
+    sys.exit()
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
