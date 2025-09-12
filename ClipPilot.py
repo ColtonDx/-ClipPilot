@@ -170,7 +170,7 @@ def call_chatgpt(self, user_input):
 
         if "choices" in data and len(data["choices"]) > 0:
             reply = data["choices"][0]["message"]["content"]
-            root.after(0, lambda: ResponseWindow(root, reply, user_input))  # ✅ Pass initial_prompt
+            root.after(0, lambda: ResponseWindow(root, reply, user_input))
         else:
             root.after(0, lambda: messagebox.showerror("API Error", "No response content received."))
     except Exception:
@@ -215,7 +215,7 @@ def call_chatgpt(self, user_input):
 
         if "choices" in data and len(data["choices"]) > 0:
             reply = data["choices"][0]["message"]["content"]
-            root.after(0, lambda: ResponseWindow(root, reply, user_input))  # ✅ Pass initial_prompt
+            root.after(0, lambda: ResponseWindow(root, reply, user_input))
         else:
             root.after(0, lambda: messagebox.showerror("API Error", "No response content received."))
     except Exception:
