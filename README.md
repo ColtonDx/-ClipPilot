@@ -42,6 +42,14 @@ pip install -r requirements.txt
 
 ---
 
+## How to Build
+1. Download and extract the Repo
+2. Make any changes to system messages or desired prompts
+3. Run:
+```
+ python -m PyInstaller --onefile --windowed --icon=ClipPilot_Logo.ico --add-data "ClipPilot_Logo.ico;." ClipPilot.py
+```
+
 ## 🛡️ Privacy Note
 
 This app sends clipboard content to the Azure OpenAI API for processing.  

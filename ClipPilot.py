@@ -7,6 +7,7 @@ import threading
 import configparser
 import os
 import re
+import sys
 
 CONFIG_FILE = "ClipPilot.conf"
 
@@ -291,6 +292,35 @@ class ResponseWindow(tk.Toplevel):
         pyperclip.copy(full_text)
         messagebox.showinfo("Copied", "Conversation copied to clipboard.")
 
+# === System Tray Icon ===
+import pystray
+from pystray import MenuItem as item
+from PIL import Image
+import subprocess
+
+def open_config():
+    subprocess.Popen(["notepad.exe", CONFIG_FILE])
+
+def exit_app(icon, item):
+    icon.stop()
+    root.quit()
+    sys.exit()
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.abspath(relative_path)
+
+def create_tray_icon():
+    image = Image.open(resource_path("ClipPilot_Logo.ico"))
+    menu = (
+        item("Open Config", lambda: open_config()),
+        item("Exit", exit_app)
+    )
+    icon = pystray.Icon("ClipPilot", image, "ClipPilot", menu)
+    threading.Thread(target=icon.run, daemon=True).start()
+
+
 
 # === Hotkey Listener ===
 def launch_popup():
@@ -307,5 +337,6 @@ def start_hotkey_listener():
 
 # === Main ===
 if __name__ == "__main__":
+    create_tray_icon()
     threading.Thread(target=start_hotkey_listener, daemon=True).start()
     root.mainloop()
