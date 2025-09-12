@@ -307,5 +307,29 @@ def start_hotkey_listener():
 
 # === Main ===
 if __name__ == "__main__":
+    create_tray_icon()
     threading.Thread(target=start_hotkey_listener, daemon=True).start()
     root.mainloop()
+
+
+# === System Tray Icon ===
+import pystray
+from pystray import MenuItem as item
+from PIL import Image
+import subprocess
+
+def open_config():
+    subprocess.Popen(["notepad.exe", CONFIG_FILE])
+
+def exit_app(icon, item):
+    icon.stop()
+    root.quit()
+
+def create_tray_icon():
+    image = Image.open("ClipPilot_Logo.png")  # Use a small square PNG
+    menu = (
+        item("Open Config", lambda: open_config()),
+        item("Exit", exit_app)
+    )
+    icon = pystray.Icon("ClipPilot", image, "ClipPilot", menu)
+    threading.Thread(target=icon.run, daemon=True).start()
