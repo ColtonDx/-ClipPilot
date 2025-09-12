@@ -305,7 +305,7 @@ def exit_app(icon, item):
     root.quit()
 
 def create_tray_icon():
-    image = Image.open("ClipPilot_Logo.png")  # Use a small square PNG
+    image = Image.open("ClipPilot_Logo.ico")  # Use a small square PNG
     menu = (
         item("Open Config", lambda: open_config()),
         item("Exit", exit_app)
