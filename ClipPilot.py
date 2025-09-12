@@ -304,14 +304,22 @@ def exit_app(icon, item):
     icon.stop()
     root.quit()
 
+import sys, os
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.abspath(relative_path)
+
 def create_tray_icon():
-    image = Image.open("ClipPilot_Logo.ico") 
+    image = Image.open(resource_path("ClipPilot_Logo.ico"))
     menu = (
         item("Open Config", lambda: open_config()),
         item("Exit", exit_app)
     )
     icon = pystray.Icon("ClipPilot", image, "ClipPilot", menu)
     threading.Thread(target=icon.run, daemon=True).start()
+
 
 
 # === Hotkey Listener ===
