@@ -291,27 +291,6 @@ class ResponseWindow(tk.Toplevel):
         pyperclip.copy(full_text)
         messagebox.showinfo("Copied", "Conversation copied to clipboard.")
 
-
-# === Hotkey Listener ===
-def launch_popup():
-    clipboard_text = pyperclip.paste().strip()
-    if clipboard_text:
-        root.after(0, lambda: PromptPopup(root, clipboard_text))
-    else:
-        root.after(0, lambda: messagebox.showwarning("Empty Clipboard", "Clipboard is empty."))
-
-def start_hotkey_listener():
-    keyboard.add_hotkey(current_hotkey, launch_popup)
-    print(f"📋 ClipPilot hotkey listener running... Press {current_hotkey} to activate.")
-    keyboard.wait()
-
-# === Main ===
-if __name__ == "__main__":
-    create_tray_icon()
-    threading.Thread(target=start_hotkey_listener, daemon=True).start()
-    root.mainloop()
-
-
 # === System Tray Icon ===
 import pystray
 from pystray import MenuItem as item
@@ -333,3 +312,23 @@ def create_tray_icon():
     )
     icon = pystray.Icon("ClipPilot", image, "ClipPilot", menu)
     threading.Thread(target=icon.run, daemon=True).start()
+
+
+# === Hotkey Listener ===
+def launch_popup():
+    clipboard_text = pyperclip.paste().strip()
+    if clipboard_text:
+        root.after(0, lambda: PromptPopup(root, clipboard_text))
+    else:
+        root.after(0, lambda: messagebox.showwarning("Empty Clipboard", "Clipboard is empty."))
+
+def start_hotkey_listener():
+    keyboard.add_hotkey(current_hotkey, launch_popup)
+    print(f"📋 ClipPilot hotkey listener running... Press {current_hotkey} to activate.")
+    keyboard.wait()
+
+# === Main ===
+if __name__ == "__main__":
+    create_tray_icon()
+    threading.Thread(target=start_hotkey_listener, daemon=True).start()
+    root.mainloop()
