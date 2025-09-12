@@ -1,3 +1,5 @@
 pyperclip
 requests
 keyboard
+pystray
+pillow
